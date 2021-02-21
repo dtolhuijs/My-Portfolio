@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\IndexController;
+use App\Http\Controllers\StorePostController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -19,6 +20,7 @@ Auth::routes();
 Route::get('/', [IndexController::class, 'index']);
 Route::get('/insta-feed', [IndexController::class, 'instaFeed']);
 Route::post('/submit', [ContactController::class, 'submit']);
+Route::post('/store', [StorePostController::class, 'store']);
 
 Route::inertia('/', 'Index');
 Route::inertia('/about', 'About');

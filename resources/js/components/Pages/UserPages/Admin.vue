@@ -7,7 +7,7 @@
                     <h1 class="text-center">Admin</h1>
                 </div>
             </div>
-            <div id="admin" class="row">
+            <form @submit.prevent="submit" action="?" method="post" id="admin" class="row">
                 <div class="col-md-8 mt-5 mx-auto">
                     <div class="form-group">
                         <div class="d-flex align-items-center flex-column flex-sm-row mb-4 p-4 bg-light">
@@ -20,7 +20,8 @@
                         </div>
                         <div class="row">
                             <div class="col-8 pr-0">
-                                <input v-model="newTag" id="tags" type="text"  class="form-control" name="tag" placeholder="Add tags">
+                                <input v-model="fields.newTag" id="tags" type="text" class="form-control" name="tag" placeholder="Add tags">
+                                <div v-if="errors && errors.newTag" class="text-danger">{{ errors.newTag[0] }}</div>
                             </div>
                             <div class="col-4 pl-0">
                                 <button @click="addTag" class="btn btn-md btn-primary btn-block">Add tag</button>
@@ -40,22 +41,21 @@
                     </div>
                     <div class="form-group">
                         <label for="date">Date</label>
-                        <input v-model="date" id="date" type="date" class="form-control" name="date" placeholder="Date">
-                        <p>{{ date }}</p>
+                        <input  v-model="fields.date" id="date" type="date" class="form-control" name="date" placeholder="Date">
+                        <div v-if="errors && errors.date" class="text-danger">{{ errors.date[0] }}</div>
                     </div>
                     <div class="form-group">
                         <label for="title">Post title</label>
-                        <input v-model="title" id="title" type="text" class="form-control" name="titile" placeholder="Post title">
-                        <p>{{ title }}</p>
+                        <input v-model="fields.title" id="title" type="text" class="form-control" name="title" placeholder="Post title">
+                        <div v-if="errors && errors.title" class="text-danger">{{ errors.title[0] }}</div>
                     </div>
                     <div class="form-group">
                         <editor></editor>
                     </div>
 
-                    <button class="btn btn-lg btn-outline-info btn-block">Publish Post</button><br>
-
+                    <button class="btn btn-lg btn-outline-info btn-block" type="submit">Publish Post</button><br>
                 </div>
-            </div>
+            </form>
             <div class="push"></div>
         </div>
         <footer-section/>
@@ -75,12 +75,21 @@ export default{
 
     data() {
         return {
-            newTag: '',
             tags: ['Art','Design'],
-            date: '',
-            title: '',
-            image: ''
+            image: '',
+            fields: {
+                content: ''
+            },
+            errors: {},
         }
+    },
+
+    mounted() {
+        EventBus.$on('editor-content-change', content => this.fields.content = content);
+    },
+
+    beforeDestroy() {
+        EventBus.$off('editor-content-change');
     },
 
     methods: {
@@ -88,12 +97,26 @@ export default{
             this.tags.push(this.newTag);
             this.newTag = '';
         },
+
+        submit() {
+            this.errors = {};
+
+            axios.post('/store', this.fields).then(response => {
+                alert('Post saved successfully');
+            }).catch(error => {
+                if (error.response.status === 422) {
+                    this.errors = error.response.data.errors || {};
+                }
+            });
+        },
+
         onFileChange(e) {
             let files = e.target.files || e.dataTransfer.files;
             if (!files.length)
                 return;
             this.createImage(files[0]);
         },
+
         createImage(file) {
             let image = new Image();
             let reader = new FileReader();
@@ -104,6 +127,7 @@ export default{
             };
             reader.readAsDataURL(file);
         },
+
         removeImage: function (e) {
             this.image = '';
         }

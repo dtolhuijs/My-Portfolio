@@ -3828,17 +3828,40 @@ __webpack_require__.r(__webpack_exports__);
   },
   data: function data() {
     return {
-      newTag: '',
       tags: ['Art', 'Design'],
-      date: '',
-      title: '',
-      image: ''
+      image: '',
+      fields: {
+        content: ''
+      },
+      errors: {}
     };
+  },
+  mounted: function mounted() {
+    var _this = this;
+
+    EventBus.$on('editor-content-change', function (content) {
+      return _this.fields.content = content;
+    });
+  },
+  beforeDestroy: function beforeDestroy() {
+    EventBus.$off('editor-content-change');
   },
   methods: {
     addTag: function addTag() {
       this.tags.push(this.newTag);
       this.newTag = '';
+    },
+    submit: function submit() {
+      var _this2 = this;
+
+      this.errors = {};
+      axios.post('/store', this.fields).then(function (response) {
+        alert('Post saved successfully');
+      })["catch"](function (error) {
+        if (error.response.status === 422) {
+          _this2.errors = error.response.data.errors || {};
+        }
+      });
     },
     onFileChange: function onFileChange(e) {
       var files = e.target.files || e.dataTransfer.files;
@@ -3983,32 +4006,13 @@ __webpack_require__.r(__webpack_exports__);
         list: "ordered"
       }, {
         list: "bullet"
-      }], ["image", "code-block"]]
+      }] // ["image", "code-block"]
+      ]
     };
   },
-  methods: {
-    handleImageAdded: function handleImageAdded(file, Editor, cursorLocation, resetUploader) {
-      // An example of using FormData
-      // NOTE: Your key could be different such as:
-      // formData.append('file', file)
-      var formData = new FormData();
-      formData.append("image", file);
-      axios__WEBPACK_IMPORTED_MODULE_1___default()({
-        url: "https://fakeapi.yoursite.com/images",
-        method: "POST",
-        data: formData
-      }).then(function (result) {
-        var url = result.data.url; // Get url from response
-
-        Editor.insertEmbed(cursorLocation, "image", url);
-        resetUploader();
-      })["catch"](function (err) {
-        console.log(err);
-      });
-    },
-    handleSavingContent: function handleSavingContent() {
-      // You have the content to save
-      return this.content;
+  watch: {
+    content: function content() {
+      EventBus.$emit('editor-content-change', this.content);
     }
   }
 });
@@ -20967,181 +20971,213 @@ var render = function() {
       _c("div", { staticClass: "wrapper container" }, [
         _vm._m(0),
         _vm._v(" "),
-        _c("div", { staticClass: "row", attrs: { id: "admin" } }, [
-          _c("div", { staticClass: "col-md-8 mt-5 mx-auto" }, [
-            _c("div", { staticClass: "form-group" }, [
-              _c(
-                "div",
-                {
-                  staticClass:
-                    "d-flex align-items-center flex-column flex-sm-row mb-4 p-4 bg-light"
-                },
-                [
-                  _c("h3", { staticClass: "h4 mb-3 mb-sm-0" }, [
-                    _vm._v("Tags")
-                  ]),
-                  _vm._v(" "),
-                  _c(
-                    "ul",
-                    { staticClass: "list-inline mb-0 ml-0 ml-sm-3" },
-                    _vm._l(_vm.tags, function(tag) {
-                      return _c(
-                        "li",
-                        { staticClass: "list-inline-item my-1 mr-2" },
-                        [
-                          _c("span", {
-                            staticClass: "sidebar-tag-link",
-                            domProps: { textContent: _vm._s(tag) }
-                          })
-                        ]
-                      )
-                    }),
-                    0
-                  )
-                ]
-              ),
-              _vm._v(" "),
-              _c("div", { staticClass: "row" }, [
-                _c("div", { staticClass: "col-8 pr-0" }, [
-                  _c("input", {
-                    directives: [
-                      {
-                        name: "model",
-                        rawName: "v-model",
-                        value: _vm.newTag,
-                        expression: "newTag"
-                      }
-                    ],
-                    staticClass: "form-control",
-                    attrs: {
-                      id: "tags",
-                      type: "text",
-                      name: "tag",
-                      placeholder: "Add tags"
-                    },
-                    domProps: { value: _vm.newTag },
-                    on: {
-                      input: function($event) {
-                        if ($event.target.composing) {
-                          return
-                        }
-                        _vm.newTag = $event.target.value
-                      }
-                    }
-                  })
-                ]),
-                _vm._v(" "),
-                _c("div", { staticClass: "col-4 pl-0" }, [
-                  _c(
-                    "button",
-                    {
-                      staticClass: "btn btn-md btn-primary btn-block",
-                      on: { click: _vm.addTag }
-                    },
-                    [_vm._v("Add tag")]
-                  )
-                ])
-              ])
-            ]),
-            _vm._v(" "),
-            _c("div", { staticClass: "form-group" }, [
-              !_vm.image
-                ? _c("div", [
-                    _c("label", { attrs: { for: "imagePost" } }, [
-                      _vm._v("Upload image")
+        _c(
+          "form",
+          {
+            staticClass: "row",
+            attrs: { action: "?", method: "post", id: "admin" },
+            on: {
+              submit: function($event) {
+                $event.preventDefault()
+                return _vm.submit($event)
+              }
+            }
+          },
+          [
+            _c("div", { staticClass: "col-md-8 mt-5 mx-auto" }, [
+              _c("div", { staticClass: "form-group" }, [
+                _c(
+                  "div",
+                  {
+                    staticClass:
+                      "d-flex align-items-center flex-column flex-sm-row mb-4 p-4 bg-light"
+                  },
+                  [
+                    _c("h3", { staticClass: "h4 mb-3 mb-sm-0" }, [
+                      _vm._v("Tags")
                     ]),
                     _vm._v(" "),
+                    _c(
+                      "ul",
+                      { staticClass: "list-inline mb-0 ml-0 ml-sm-3" },
+                      _vm._l(_vm.tags, function(tag) {
+                        return _c(
+                          "li",
+                          { staticClass: "list-inline-item my-1 mr-2" },
+                          [
+                            _c("span", {
+                              staticClass: "sidebar-tag-link",
+                              domProps: { textContent: _vm._s(tag) }
+                            })
+                          ]
+                        )
+                      }),
+                      0
+                    )
+                  ]
+                ),
+                _vm._v(" "),
+                _c("div", { staticClass: "row" }, [
+                  _c("div", { staticClass: "col-8 pr-0" }, [
                     _c("input", {
-                      staticClass: "form-control-file",
-                      attrs: { type: "file", id: "imagePost", name: "image" },
-                      on: { change: _vm.onFileChange }
-                    })
-                  ])
-                : _c("div", [
-                    _c("img", { attrs: { src: _vm.image } }),
+                      directives: [
+                        {
+                          name: "model",
+                          rawName: "v-model",
+                          value: _vm.fields.newTag,
+                          expression: "fields.newTag"
+                        }
+                      ],
+                      staticClass: "form-control",
+                      attrs: {
+                        id: "tags",
+                        type: "text",
+                        name: "tag",
+                        placeholder: "Add tags"
+                      },
+                      domProps: { value: _vm.fields.newTag },
+                      on: {
+                        input: function($event) {
+                          if ($event.target.composing) {
+                            return
+                          }
+                          _vm.$set(_vm.fields, "newTag", $event.target.value)
+                        }
+                      }
+                    }),
                     _vm._v(" "),
-                    _c("button", { on: { click: _vm.removeImage } }, [
-                      _vm._v("Remove image")
-                    ])
+                    _vm.errors && _vm.errors.newTag
+                      ? _c("div", { staticClass: "text-danger" }, [
+                          _vm._v(_vm._s(_vm.errors.newTag[0]))
+                        ])
+                      : _vm._e()
+                  ]),
+                  _vm._v(" "),
+                  _c("div", { staticClass: "col-4 pl-0" }, [
+                    _c(
+                      "button",
+                      {
+                        staticClass: "btn btn-md btn-primary btn-block",
+                        on: { click: _vm.addTag }
+                      },
+                      [_vm._v("Add tag")]
+                    )
                   ])
-            ]),
-            _vm._v(" "),
-            _c("div", { staticClass: "form-group" }, [
-              _c("label", { attrs: { for: "date" } }, [_vm._v("Date")]),
+                ])
+              ]),
               _vm._v(" "),
-              _c("input", {
-                directives: [
-                  {
-                    name: "model",
-                    rawName: "v-model",
-                    value: _vm.date,
-                    expression: "date"
-                  }
-                ],
-                staticClass: "form-control",
-                attrs: {
-                  id: "date",
-                  type: "date",
-                  name: "date",
-                  placeholder: "Date"
-                },
-                domProps: { value: _vm.date },
-                on: {
-                  input: function($event) {
-                    if ($event.target.composing) {
-                      return
+              _c("div", { staticClass: "form-group" }, [
+                !_vm.image
+                  ? _c("div", [
+                      _c("label", { attrs: { for: "imagePost" } }, [
+                        _vm._v("Upload image")
+                      ]),
+                      _vm._v(" "),
+                      _c("input", {
+                        staticClass: "form-control-file",
+                        attrs: { type: "file", id: "imagePost", name: "image" },
+                        on: { change: _vm.onFileChange }
+                      })
+                    ])
+                  : _c("div", [
+                      _c("img", { attrs: { src: _vm.image } }),
+                      _vm._v(" "),
+                      _c("button", { on: { click: _vm.removeImage } }, [
+                        _vm._v("Remove image")
+                      ])
+                    ])
+              ]),
+              _vm._v(" "),
+              _c("div", { staticClass: "form-group" }, [
+                _c("label", { attrs: { for: "date" } }, [_vm._v("Date")]),
+                _vm._v(" "),
+                _c("input", {
+                  directives: [
+                    {
+                      name: "model",
+                      rawName: "v-model",
+                      value: _vm.fields.date,
+                      expression: "fields.date"
                     }
-                    _vm.date = $event.target.value
-                  }
-                }
-              }),
-              _vm._v(" "),
-              _c("p", [_vm._v(_vm._s(_vm.date))])
-            ]),
-            _vm._v(" "),
-            _c("div", { staticClass: "form-group" }, [
-              _c("label", { attrs: { for: "title" } }, [_vm._v("Post title")]),
-              _vm._v(" "),
-              _c("input", {
-                directives: [
-                  {
-                    name: "model",
-                    rawName: "v-model",
-                    value: _vm.title,
-                    expression: "title"
-                  }
-                ],
-                staticClass: "form-control",
-                attrs: {
-                  id: "title",
-                  type: "text",
-                  name: "titile",
-                  placeholder: "Post title"
-                },
-                domProps: { value: _vm.title },
-                on: {
-                  input: function($event) {
-                    if ($event.target.composing) {
-                      return
+                  ],
+                  staticClass: "form-control",
+                  attrs: {
+                    id: "date",
+                    type: "date",
+                    name: "date",
+                    placeholder: "Date"
+                  },
+                  domProps: { value: _vm.fields.date },
+                  on: {
+                    input: function($event) {
+                      if ($event.target.composing) {
+                        return
+                      }
+                      _vm.$set(_vm.fields, "date", $event.target.value)
                     }
-                    _vm.title = $event.target.value
                   }
-                }
-              }),
+                }),
+                _vm._v(" "),
+                _vm.errors && _vm.errors.date
+                  ? _c("div", { staticClass: "text-danger" }, [
+                      _vm._v(_vm._s(_vm.errors.date[0]))
+                    ])
+                  : _vm._e()
+              ]),
               _vm._v(" "),
-              _c("p", [_vm._v(_vm._s(_vm.title))])
-            ]),
-            _vm._v(" "),
-            _c("div", { staticClass: "form-group" }, [_c("editor")], 1),
-            _vm._v(" "),
-            _c(
-              "button",
-              { staticClass: "btn btn-lg btn-outline-info btn-block" },
-              [_vm._v("Publish Post")]
-            ),
-            _c("br")
-          ])
-        ]),
+              _c("div", { staticClass: "form-group" }, [
+                _c("label", { attrs: { for: "title" } }, [
+                  _vm._v("Post title")
+                ]),
+                _vm._v(" "),
+                _c("input", {
+                  directives: [
+                    {
+                      name: "model",
+                      rawName: "v-model",
+                      value: _vm.fields.title,
+                      expression: "fields.title"
+                    }
+                  ],
+                  staticClass: "form-control",
+                  attrs: {
+                    id: "title",
+                    type: "text",
+                    name: "title",
+                    placeholder: "Post title"
+                  },
+                  domProps: { value: _vm.fields.title },
+                  on: {
+                    input: function($event) {
+                      if ($event.target.composing) {
+                        return
+                      }
+                      _vm.$set(_vm.fields, "title", $event.target.value)
+                    }
+                  }
+                }),
+                _vm._v(" "),
+                _vm.errors && _vm.errors.title
+                  ? _c("div", { staticClass: "text-danger" }, [
+                      _vm._v(_vm._s(_vm.errors.title[0]))
+                    ])
+                  : _vm._e()
+              ]),
+              _vm._v(" "),
+              _c("div", { staticClass: "form-group" }, [_c("editor")], 1),
+              _vm._v(" "),
+              _c(
+                "button",
+                {
+                  staticClass: "btn btn-lg btn-outline-info btn-block",
+                  attrs: { type: "submit" }
+                },
+                [_vm._v("Publish Post")]
+              ),
+              _c("br")
+            ])
+          ]
+        ),
         _vm._v(" "),
         _c("div", { staticClass: "push" })
       ]),
